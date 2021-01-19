@@ -1,47 +1,132 @@
 import * as THREE from '/build/three.module.js';
 import { OrbitControls } from '/jsm/controls/OrbitControls.js';
+import { AmmoPhysics } from '/jsm/physics/AmmoPhysics.js';
 import Stats from '/jsm/libs/stats.module.js';
+let camera, scene, renderer, stats;
+let physics, position;
 
-const scene = new THREE.Scene();
+let boxes, spheres;
 
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100);
-camera.position.z = 2;
+init();
 
-const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setSize(window.innerWidth, window.innerHeight);
-document.body.appendChild(renderer.domElement);
+async function init() {
 
-const controls = new OrbitControls(camera, renderer.domElement);
+    physics = await AmmoPhysics();
+    position = new THREE.Vector3();
 
-const geometry = new THREE.BoxGeometry();
-const material = new THREE.MeshBasicMaterial({
-    color: 0x0000ff,
-    wireframe: true
-});
-const cube = new THREE.Mesh(geometry, material);
-scene.add(cube);
+    //
 
-window.addEventListener('resize', () => {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
+    camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.set(-1, 1.5, 2);
+    camera.lookAt(0, 0.5, 0);
+
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xffffff);
+
+    const hemiLight = new THREE.HemisphereLight();
+    hemiLight.intensity = 0.35;
+    scene.add(hemiLight);
+
+    const dirLight = new THREE.DirectionalLight();
+    dirLight.position.set(5, 5, 5);
+    dirLight.castShadow = true;
+    dirLight.shadow.camera.zoom = 2;
+    scene.add(dirLight);
+
+    const floor = new THREE.Mesh(
+        new THREE.BoxBufferGeometry(10, 5, 10),
+        new THREE.ShadowMaterial({ color: 0x111111 })
+    );
+    floor.position.y = -2.5;
+    floor.receiveShadow = true;
+    scene.add(floor);
+    physics.addMesh(floor);
+
+    //
+
+    const material = new THREE.MeshLambertMaterial();
+
+    const matrix = new THREE.Matrix4();
+    const color = new THREE.Color();
+
+    // Boxes
+
+    const geometryBox = new THREE.BoxBufferGeometry(0.1, 0.1, 0.1);
+    boxes = new THREE.InstancedMesh(geometryBox, material, 100);
+    boxes.castShadow = true;
+    boxes.receiveShadow = true;
+    scene.add(boxes);
+
+    /* for (let i = 0; i < boxes.count; i++) {
+
+        matrix.setPosition(Math.random() - 0.5, Math.random() * 2, Math.random() - 0.5);
+        boxes.setMatrixAt(i, matrix);
+        boxes.setColorAt(i, color.setHex(0xffffff * Math.random()));
+
+    } */
+
+    physics.addMesh(boxes, 1);
+
+    // Spheres
+    /* 
+     const geometrySphere = new THREE.IcosahedronBufferGeometry(0.075, 3);
+     spheres = new THREE.InstancedMesh(geometrySphere, material, 100);
+     spheres.castShadow = true;
+     spheres.receiveShadow = true;
+     scene.add(spheres);
+
+      for (let i = 0; i < spheres.count; i++) {
+
+         matrix.setPosition(Math.random() - 0.5, Math.random() * 2, Math.random() - 0.5);
+         spheres.setMatrixAt(i, matrix);
+         spheres.setColorAt(i, color.setHex(0xffffff * Math.random()));
+
+     } 
+
+     physics.addMesh(spheres, 1); */
+
+    //
+
+    renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(window.innerWidth, window.innerHeight);
-    render();
-}, false);
+    renderer.shadowMap.enabled = true;
+    renderer.outputEncoding = THREE.sRGBEncoding;
+    document.body.appendChild(renderer.domElement);
 
-/* const stats = Stats();
-document.body.appendChild(stats.dom); */
+    /* stats = new Stats();
+    document.body.appendChild(stats.dom); */
 
-var animate = function() {
-    requestAnimationFrame(animate);
-    cube.rotation.x += 0.01;
-    cube.rotation.y += 0.01;
+    //
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.y = 0.5;
     controls.update();
-    render();
-    /* stats.update(); */
-};
 
-function render() {
-    renderer.render(scene, camera);
+    animate();
+
 }
 
-animate();
+function animate() {
+
+    requestAnimationFrame(animate);
+
+    //
+
+    let index = Math.floor(Math.random() * boxes.count);
+
+    position.set(0, Math.random() + 1, 0);
+    physics.setMeshPosition(boxes, position, index);
+
+    //
+
+    /* index = Math.floor(Math.random() * spheres.count); */
+
+    /* position.set(0, Math.random() + 1, 0);
+    physics.setMeshPosition(spheres, position, index); */
+
+    renderer.render(scene, camera);
+
+    /* stats.update(); */
+
+}
