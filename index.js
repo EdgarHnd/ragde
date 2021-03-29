@@ -21,6 +21,9 @@ app.get("/one", (req, res) => {
 app.get("/two", (req, res) => {
     res.render('two');
 });
+app.get("/three", (req, res) => {
+    res.render('three');
+});
 
 app.listen(8080, () =>
     console.log('Visit http://127.0.0.1:8080')

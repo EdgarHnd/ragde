@@ -2,7 +2,7 @@ import * as THREE from '/build/three.module.js';
 import { OrbitControls } from '/jsm/controls/OrbitControls.js';
 
 var camera, scene, renderer, raycaster, mouse, text;
-var one, two;
+var one, two, three;
 let mouseX = 0;
 let mouseY = 0;
 let windowHalfX = window.innerWidth / 2;
@@ -106,6 +106,14 @@ function init() {
     loop.rotation.set(1, -0.7, 0.7)
     scene.add(loop);
 
+    //three
+    const cyl = new THREE.CylinderGeometry(10, 10, 50, 32);
+    three = new THREE.Mesh(cyl, new THREE.MeshBasicMaterial({
+        color: "rgb(54, 255, 231)",
+    }));
+    three.position.set(250, 0, 0);
+    three.userData = { URL: "/three" };
+    scene.add(three);
 
 
     renderer = new THREE.WebGLRenderer({ antialias: true });
